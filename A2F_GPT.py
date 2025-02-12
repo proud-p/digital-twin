@@ -2,14 +2,14 @@
 
 from openai import AzureOpenAI
 from csv import writer
-# from TTS_elevenlabs import get_speech
+from TTS_elevenlabs import get_speech
 import os, faiss, pickle, time
 import streamlit as st
 import numpy as np
 import pandas as pd
 from STT import convert_speech_text
 from pythonosc import udp_client
-# from audio2face_streaming_utils import main
+from audio2face_streaming_utils import main
 import dotenv
 
 dotenv.load_dotenv()
@@ -86,6 +86,7 @@ def get_response(prompt):
 # STEP 4: Main Program Logic
 ###################################
 
+
 if __name__ == "__main__":
     
     print("Hi! I am a chatbot.")
@@ -101,3 +102,22 @@ if __name__ == "__main__":
             
             # Generate a response and proceed
             print(f"ANSWER: {get_response(prompt)}\n")
+            answer = get_response(prompt)
+            
+            ###################################
+            # STEP 5: Convert Response to Speech
+            ###################################
+            get_speech(answer)  # Provide the response in speech form
+
+            ###################################
+            # STEP 6: Stream Audio to Omniverse
+            ###################################
+            # voices audio , prim path (prim path get from omniverse)
+
+            main('voices/audio.wav', '/World/audio2face/PlayerStreaming')
+        
+        else:
+            print("Could not recognize speech. Please try again.")
+            continue  # Continue to listen for speech again
+
+            

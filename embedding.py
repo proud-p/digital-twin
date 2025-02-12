@@ -58,7 +58,7 @@ def create_index(filename):
     index = faiss.IndexFlatL2(dimensions)
     index.add(embeddings)
 
-    faiss.write_index(index,"knowledge/knowledge_text.txt")
+    faiss.write_index(index,"knowledge/knowledge_index.txt")
 
     #########################################################
     # STEP 4. Save text data for later retrieval
