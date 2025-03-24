@@ -1,16 +1,24 @@
 from gtts import gTTS
 from pythonosc import dispatcher, osc_server
-from audio2face_streaming_utils import main  # Assumed to stream audio to Omniverse
+from audio2face_streaming_utils import main  # Your Omniverse streamer
 import os
+import time
 
 class VoiceResponder:
-    def __init__(self, prim_path='/World/audio2face/PlayerStreaming'):
+    def __init__(self, prim_path='/World/audio2face/PlayerStreaming', audio_path='voices/audio.wav'):
         self.prim_path = prim_path
+        self.audio_path = audio_path
+        self.sleeping = False
 
-    def handle_response(self, *args):
-        # Join args if it's a multi-part OSC string
+        os.makedirs(os.path.dirname(self.audio_path), exist_ok=True)
+
+    def handle_response(self, address, *args):
+        if self.sleeping:
+            print("⏳ Ignoring message — still sleeping.")
+            return
+        
         if not args:
-            print("No response text received.")
+            print("⚠️ No text received.")
             return
 
         text = " ".join(map(str, args)).strip()
@@ -18,25 +26,31 @@ class VoiceResponder:
 
         # Convert to speech
         tts = gTTS(text)
-        tts.save("voices/audio.wav")
-        print("🔊 Saved TTS audio.")
+        tts.save(self.audio_path)
+        print(f"🔊 Saved TTS audio to {self.audio_path}")
 
-        # Stream audio to Omniverse
-        main("voices/audio.wav", self.prim_path)
-        print("🚀 Streamed to Audio2Face.")
+        # Stream to Omniverse
+        main(self.audio_path, self.prim_path)
+        print("🚀 Streamed to Omniverse Audio2Face.")
+
+        # Sleep to avoid overlap
+        self.sleeping = True
+        print("😴 Sleeping for 30s...")
+        time.sleep(30)
+        self.sleeping = False
+        print("✅ Awake and ready again!")
 
     def start(self, ip="0.0.0.0", port=6006):
         disp = dispatcher.Dispatcher()
-        # address == "answer"
         disp.map("/answer", self.handle_response)
+
         server = osc_server.BlockingOSCUDPServer((ip, port), disp)
-        print(f"🟢 Listening for OSC responses on {ip}:{port}...")
+        print(f"🟢 Listening for OSC /answer on {ip}:{port}...")
         server.serve_forever()
 
 
 if __name__ == "__main__":
-    os.makedirs("voices", exist_ok=True)
     responder = VoiceResponder()
-    ip = "192.168.0.2"        
-    port = 5009
-    responder.start(ip,port)
+    ip = "0.0.0.0"  # WSL or local
+    port = 1234        # Port you are sending to from WSL
+    responder.start(ip, port)
