@@ -11,6 +11,7 @@ from STT import convert_speech_text
 from pythonosc import udp_client
 from audio2face_streaming_utils import main
 import dotenv
+from gtts import gTTS
 
 dotenv.load_dotenv()
 
@@ -96,9 +97,11 @@ if __name__ == "__main__":
     
     while True:  # Keep the loop running indefinitely
         prompt = convert_speech_text()  # Get the speech-to-text result
+        # TODO post text to website here
+        # prompt = input("Input ")
         
         if prompt:  # If speech is recognized
-            print(f"YOU: {prompt}")
+            print(f"YOU: {prompt} 20 WORDS MAXIMUM")
             
             # Generate a response and proceed
             print(f"ANSWER: {get_response(prompt)}\n")
@@ -107,7 +110,9 @@ if __name__ == "__main__":
             ###################################
             # STEP 5: Convert Response to Speech
             ###################################
-            get_speech(answer)  # Provide the response in speech form
+            tts = gTTS(answer)
+            tts.save('audio.wav')
+            # get_speech(answer)  # Provide the response in speech form
 
             ###################################
             # STEP 6: Stream Audio to Omniverse
