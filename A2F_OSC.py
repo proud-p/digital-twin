@@ -50,6 +50,7 @@ class VoiceResponder:
 
 
 if __name__ == "__main__":
+    #TODO currently if something is being played/sent to omniverse, it blocks everything, make it stream so it's more reactive?
     responder = VoiceResponder()
     ip = "0.0.0.0"  # WSL or local
     port = 1234        # Port you are sending to from WSL
