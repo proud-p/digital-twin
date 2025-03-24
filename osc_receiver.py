@@ -4,6 +4,7 @@ from gtts import gTTS
 from pythonosc import dispatcher, osc_server
 import os
 import playsound
+from time import sleep
 
 class VoiceResponder:
     def __init__(self, audio_path='voices/audio.wav'):
@@ -21,7 +22,8 @@ class VoiceResponder:
         # Convert to speech
         tts = gTTS(text)
         tts.save(self.audio_path)
-        print(f"🔊 Saved TTS audio to {self.audio_path}")
+        sleep(30)
+        print(f"🔊 Saved TTS audio to {self.audio_path}, sleeping for 30s")
 
         # Play the audio
         playsound.playsound(self.audio_path)
