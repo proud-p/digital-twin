@@ -1,19 +1,44 @@
+# test getting gpt response messages osc from wsl
+
+from gtts import gTTS
 from pythonosc import dispatcher, osc_server
+import os
+import playsound
 
-def handle_answer(address, *args):
-    print(f" Received on {address}: {args}")
+class VoiceResponder:
+    def __init__(self, audio_path='voices/audio.wav'):
+        self.audio_path = audio_path
+        os.makedirs(os.path.dirname(self.audio_path), exist_ok=True)
 
-def start_osc_receiver(ip="0.0.0.0", port=1234):
-    disp = dispatcher.Dispatcher()
-    disp.map("/answer", handle_answer)  # Listen for messages sent to /answer
+    def handle_response(self, address, *args):
+        if not args:
+            print("⚠️ No text received.")
+            return
 
-    server = osc_server.ThreadingOSCUDPServer((ip, port), disp)
-    print(f"✅ OSC server listening on {ip}:{port} (Ctrl+C to stop)")
-    server.serve_forever()
+        text = " ".join(map(str, args)).strip()
+        print(f"📥 Received OSC text: {text}")
+
+        # Convert to speech
+        tts = gTTS(text)
+        tts.save(self.audio_path)
+        print(f"🔊 Saved TTS audio to {self.audio_path}")
+
+        # Play the audio
+        playsound.playsound(self.audio_path)
+        print("✅ Finished playing audio.")
+
+    def start(self, ip="0.0.0.0", port=6006):
+        disp = dispatcher.Dispatcher()
+        disp.map("/answer", self.handle_response)
+
+        server = osc_server.BlockingOSCUDPServer((ip, port), disp)
+        print(f"🟢 Listening for OSC /answer on {ip}:{port}...")
+        server.serve_forever()
 
 
 if __name__ == "__main__":
-    ip = "192.168.0.2"        
-    port = 1234    # Your desired port
-    
-    start_osc_receiver(ip,port)
+    responder = VoiceResponder()
+    ip = "192.168.0.2"       
+    port = 1234
+    responder.start(ip,port)
+
