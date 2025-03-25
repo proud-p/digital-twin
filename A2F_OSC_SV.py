@@ -8,7 +8,6 @@ import time
 import tempfile
 import speech_recognition as sr
 
-
 class VoiceResponder:
     def __init__(self, prim_path='/World/audio2face/PlayerStreaming', wsl_ip="172.30.40.252", wsl_port=5009):
         self.prim_path = prim_path
@@ -18,7 +17,11 @@ class VoiceResponder:
         self.y = 1.0
         self.lock = threading.Lock()
         self.chunk_word_count = 8
-        self.wsl_client = udp_client.SimpleUDPClient(wsl_ip, wsl_port)
+
+        # OSC clients
+        self.wsl_client = udp_client.SimpleUDPClient(wsl_ip, wsl_port)         # for GPT2 text updates
+        self.unreal_client = udp_client.SimpleUDPClient("127.0.0.1", 4444)     # for Unreal chunk display
+
         os.makedirs("voices", exist_ok=True)
 
         threading.Thread(target=self._stream_loop, daemon=True).start()
@@ -89,6 +92,7 @@ class VoiceResponder:
                         continue
 
                     print(f"📤 Streaming chunk {i+1}/{len(chunks)}: {chunk_text}")
+                    self.unreal_client.send_message("/trigger", chunk_text)  # ← send to Unreal
                     main(chunk_paths[i], self.prim_path)
 
                     for j in range(i + 1, i + 3):
