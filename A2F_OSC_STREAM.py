@@ -57,7 +57,7 @@ class VoiceResponder:
 
                 for i, chunk in enumerate(chunks):
                     with self.lock:
-                        if self.latest_text:
+                        if self.latest_text: #TODO
                             print(f"🛑 Interrupted at chunk {i} — new message received.")
                             break
 
