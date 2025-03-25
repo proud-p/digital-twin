@@ -63,7 +63,8 @@ def push_audio_track_stream(url, audio_data, samplerate, instance_name):
     """
 
     chunk_size = samplerate // 10  # ADJUST
-    sleep_between_chunks = 0.04  # ADJUST
+    # sleep_between_chunks = 0.04  # ADJUST
+    sleep_between_chunks = 0.0
     block_until_playback_is_finished = True  # ADJUST
 
     with grpc.insecure_channel(url) as channel:
