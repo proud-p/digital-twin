@@ -110,7 +110,8 @@ def main(audio_file, prim_path):
     #     return
 
     # Sleep time emulates long latency of the request
-    sleep_time = 2.0  # ADJUST
+    # sleep_time = 2.0  # ADJUST
+    sleep_time=0.0
 
     # URL of the Audio2Face Streaming Audio Player server (where A2F App is running)
     url = "localhost:50051"  # ADJUST

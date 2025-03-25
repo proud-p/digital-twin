@@ -1,7 +1,8 @@
 from gtts import gTTS
 from pydub import AudioSegment
+from pydub.utils import make_chunks
 from pythonosc import dispatcher, osc_server
-from audio2face_streaming_utils import main  # Omniverse streamer
+from audio2face_streaming_utils import main  # This is your custom function to stream to Omniverse
 import threading
 import os
 
@@ -13,7 +14,6 @@ class VoiceResponder:
         self.stream_thread = None
         self.stop_signal = threading.Event()
         self.lock = threading.Lock()
-
         os.makedirs(os.path.dirname(self.audio_path), exist_ok=True)
 
     def handle_response(self, address, *args):
@@ -24,13 +24,13 @@ class VoiceResponder:
         text = " ".join(map(str, args)).strip()
         print(f"\n📥 Received OSC text: {text}")
 
-        # Convert text to TTS
+        # Convert text to TTS (mp3 → wav)
         tts = gTTS(text)
         tts.save(self.temp_path)
         AudioSegment.from_mp3(self.temp_path).export(self.audio_path, format="wav")
         print(f"💾 Saved TTS audio to: {self.audio_path}")
 
-        # Handle streaming — ensure no overlap
+        # Handle streaming with interruption between chunks
         with self.lock:
             if self.stream_thread and self.stream_thread.is_alive():
                 print("⏹️ Interrupting previous Omniverse stream...")
@@ -38,16 +38,28 @@ class VoiceResponder:
                 self.stream_thread.join()
 
             self.stop_signal.clear()
-            self.stream_thread = threading.Thread(target=self.stream_to_omniverse, args=(self.audio_path,))
+            self.stream_thread = threading.Thread(target=self.stream_to_omniverse_in_chunks, args=(self.audio_path,))
             self.stream_thread.start()
 
-    def stream_to_omniverse(self, path):
+    def stream_to_omniverse_in_chunks(self, path):
         try:
-            print("🚀 Starting stream to Omniverse...")
-            main(path, self.prim_path)  # This will run until finished
+            print("🚀 Starting chunked stream to Omniverse...")
+            audio = AudioSegment.from_wav(path)
+            chunks = make_chunks(audio, 500)  # 500ms chunks
+
+            for i, chunk in enumerate(chunks):
+                if self.stop_signal.is_set():
+                    print(f"🛑 Stopped before chunk {i}")
+                    break
+
+                chunk_path = f"voices/chunk_{i}.wav"
+                chunk.export(chunk_path, format="wav")
+                main(chunk_path, self.prim_path)
+                print(f"📤 Sent chunk {i+1}/{len(chunks)}")
+
             print("✅ Finished Omniverse stream.")
         except Exception as e:
-            print(f"❌ Error streaming to Omniverse: {e}")
+            print(f"❌ Error during chunked streaming: {e}")
 
     def start(self, ip="0.0.0.0", port=1234):
         disp = dispatcher.Dispatcher()
@@ -60,6 +72,6 @@ class VoiceResponder:
 
 if __name__ == "__main__":
     responder = VoiceResponder()
-    ip = "0.0.0.0"  # WSL-safe
+    ip = "0.0.0.0"
     port = 1234
     responder.start(ip, port)
