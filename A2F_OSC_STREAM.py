@@ -13,7 +13,7 @@ class VoiceResponder:
         self.latest_text = None
         self.playing = False
         self.lock = threading.Lock()
-        self.chunk_word_count = 8
+        self.chunk_word_count = 8 # adjust this for interactivity
         os.makedirs("voices", exist_ok=True)
 
         threading.Thread(target=self._stream_loop, daemon=True).start()
