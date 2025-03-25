@@ -111,7 +111,7 @@ class VoiceResponder:
         mic = sr.Microphone()
 
         while True:
-            time.sleep(0.5)
+            time.sleep(0.2)
 
             with self.lock:
                 if not (self.x == 0.0 and self.y == 0.0 and not self.playing):
