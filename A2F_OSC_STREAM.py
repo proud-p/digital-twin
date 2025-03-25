@@ -59,12 +59,23 @@ class VoiceResponder:
                     with self.lock:
                         if self.latest_text: #TODO
                             print(f"🛑 Interrupted at chunk {i} — new message received.")
-                            break
+                      
 
-                    chunk_path = f"voices/chunk_{i}.wav"
-                    chunk.export(chunk_path, format="wav")
-                    print(f"📤 Sending chunk {i+1}/{len(chunks)} → {chunk_path}")
-                    main(chunk_path, self.prim_path)
+                            chunk_path = f"voices/chunk_{i}.wav"
+                            chunk.export(chunk_path, format="wav")
+                            print(f"📤 Sending chunk {i+1}/{len(chunks)} → {chunk_path}")
+                            main(chunk_path, self.prim_path)
+                            
+                            break
+                        
+                        else:
+                            chunk_path = f"voices/chunk_{i}.wav"
+                            chunk.export(chunk_path, format="wav")
+                            print(f"📤 Sending chunk {i+1}/{len(chunks)} → {chunk_path}")
+                            main(chunk_path, self.prim_path)
+                            
+                            
+
 
                 print("✅ Stream finished.")
 
