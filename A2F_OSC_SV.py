@@ -1,6 +1,6 @@
 from gtts import gTTS
 from pydub import AudioSegment
-from pythonosc import dispatcher, osc_server
+from pythonosc import dispatcher, osc_server, udp_client
 from audio2face_streaming_utils import main
 import threading
 import os
@@ -8,8 +8,9 @@ import time
 import tempfile
 import speech_recognition as sr
 
+
 class VoiceResponder:
-    def __init__(self, prim_path='/World/audio2face/PlayerStreaming'):
+    def __init__(self, prim_path='/World/audio2face/PlayerStreaming', wsl_ip="172.30.40.252", wsl_port=5009):
         self.prim_path = prim_path
         self.latest_text = None
         self.playing = False
@@ -17,6 +18,7 @@ class VoiceResponder:
         self.y = 1.0
         self.lock = threading.Lock()
         self.chunk_word_count = 8
+        self.wsl_client = udp_client.SimpleUDPClient(wsl_ip, wsl_port)
         os.makedirs("voices", exist_ok=True)
 
         threading.Thread(target=self._stream_loop, daemon=True).start()
@@ -73,7 +75,6 @@ class VoiceResponder:
                 chunks = self._split_text_into_chunks(text)
                 chunk_paths = [None] * len(chunks)
 
-                # Generate first 2 chunks synchronously
                 for i in range(min(2, len(chunks))):
                     chunk_paths[i] = self._generate_tts_chunk(chunks[i], i)
 
@@ -90,7 +91,6 @@ class VoiceResponder:
                     print(f"📤 Streaming chunk {i+1}/{len(chunks)}: {chunk_text}")
                     main(chunk_paths[i], self.prim_path)
 
-                    # Generate next 2 in background
                     for j in range(i + 1, i + 3):
                         if j < len(chunks) and chunk_paths[j] is None:
                             def _bg_generate(index, text):
@@ -129,6 +129,7 @@ class VoiceResponder:
                     with self.lock:
                         self.latest_text = text
                     print(f"🗣️ Voice Detected: {text}")
+                    self.wsl_client.send_message("/voice_prompt", text)
 
             except sr.WaitTimeoutError:
                 print("🕐 No voice input detected.")
@@ -146,6 +147,7 @@ class VoiceResponder:
         server = osc_server.BlockingOSCUDPServer((ip, port), disp)
         print(f"🟢 Listening for OSC on {ip}:{port} (addresses: /answer /x /y)")
         server.serve_forever()
+
 
 if __name__ == "__main__":
     responder = VoiceResponder()
