@@ -123,6 +123,7 @@ class VoiceResponder:
 
             try:
                 print("🎤 Ready for voice input...")
+                self.unreal_client.send_message("/trigger", "Ask, and you shall be answered....")  # ← send to Unreal
                 with mic as source:
                     recognizer.adjust_for_ambient_noise(source, duration=0.3)
                     audio = recognizer.listen(source, timeout=5)
