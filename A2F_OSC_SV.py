@@ -129,6 +129,7 @@ class VoiceResponder:
                     result = recognizer.recognize_google(audio, show_all=True)
                 if result:
                     text = result["alternative"][0]["transcript"]
+                    print(f"🗣️ Voice Detected: {text}")
                     with self.lock:
                         self.latest_text = text
                     print(f"🗣️ Voice Detected: {text}")
